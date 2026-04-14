@@ -1,92 +1,80 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
-int main() {
-    int n, task_choice, fill_choice, i;
-    printf("Оберіть задачу для виконання:\n");
-    printf("1 - Обчислити середнє геометричне додатніх елементів\n");
-    printf("2 - Знайти мін. за модулем та добуток між нулями\n");
-    printf("Ваш вибір: ");
-    scanf("%d", &task_choice);
-    printf("\nВведіть кількість елементів масиву (n): ");
-    scanf("%d", &n);
-    int a[n];
-    printf("\nОберіть спосіб заповнення масиву:\n");
-    printf("1 - З клавіатури\n");
-    printf("2 - Випадковими числами [-100; 100]\n");
-    printf("Ваш вибір: ");
-    scanf("%d", &fill_choice);
-    switch (fill_choice) {
-        case 1:
-            printf("Введіть %d цілих чисел:\n", n);
-            for (i = 0; i < n; i++) {
-                printf("a[%d] = ", i);
-                scanf("%d", &a[i]);
-            }
-            break;
-        case 2:
-            srand(time(NULL));
-            printf("Згенерований масив: ");
-            for (i = 0; i < n; i++) {
-                a[i] = rand() % 201 - 100;
-                printf("%d ", a[i]);
-            }
-            printf("\n");
-            break;
-        default:
-            printf("Невірний вибір способу заповнення!\n");
-            return 1;
-    }
-    switch (task_choice) {
-        case 1: { 
-            double product_geom = 1.0;
-            int count_pos = 0;
-            for (i = 0; i < n; i++) {
-                if (a[i] > 0) {
-                    product_geom *= a[i];
-                    count_pos++;
-                }
-            }
-            if (count_pos > 0) {
-                double res = pow(product_geom, 1.0 / count_pos);
-                printf("\nРезультат: Середнє геометричне %d додатніх чисел = %.4f\n", count_pos, res);
-            } else {
-                printf("\nДодатніх чисел не знайдено.\n");
-            }
-            break;
-        }
+#include <stdlib.h> // Для rand() та srand()
+#include <time.h>   // Для time()
+#include <math.h>   // Для abs() - модуль числа
 
-        case 2: {
-            int minAbs = abs(a[0]);
-            int minVal = a[0];
-            for (i = 1; i < n; i++) {
-                if (abs(a[i]) < minAbs) {
-                    minAbs = abs(a[i]);
-                    minVal = a[i];
-                }
-            }
-            printf("\n1) Мінімальний за модулем елемент: %d\n", minVal);
-            int firstZ = -1, lastZ = -1;
-            for (i = 0; i < n; i++) {
-                if (a[i] == 0) {
-                    if (firstZ == -1) firstZ = i;
-                    lastZ = i;
-                }
-            }
-            if (firstZ != -1 && lastZ != -1 && firstZ != lastZ) {
-                long long prod = 1;
-                for (int j = firstZ + 1; j < lastZ; j++) {
-                    prod *= a[j];
-                }
-                printf("2) Добуток елементів між першим і останнім нулями: %lld\n", prod);
-            } else {
-                printf("2) Неможливо обчислити добуток (потрібно мінімум два нулі).\n");
-            }
-            break;
+int main() {
+    int n, choice;
+
+    printf("Введіть розмір масиву n: ");
+    scanf("%d", &n);
+
+    int a[n];
+
+    printf("\nВиберіть спосіб заповнення масиву:\n");
+    printf("1. Введення з клавіатури\n");
+    printf("2. Генератор випадкових чисел [-100; 100]\n");
+    printf("Ваш вибір: ");
+    scanf("%d", &choice);
+
+    // --- ЗАПОВНЕННЯ МАСИВУ ---
+    if (choice == 1) {
+        // Спосіб А: Введення з клавіатури
+        for (int i = 0; i < n; i++) {
+            printf("a[%d] = ", i);
+            scanf("%d", &a[i]);
         }
-default:
-            printf("Такої задачі не існує.\n");
+    } else {
+        // Спосіб Б: Випадкові числа
+        srand(time(NULL)); // Ініціалізація генератора часом
+        for (int i = 0; i < n; i++) {
+            // Формула для діапазону [min; max]: rand() % (max - min + 1) + min
+            a[i] = rand() % 201 - 100; 
+            printf("%d ", a[i]);
+        }
+        printf("\n");
     }
+
+    // --- 1) ПОШУК МІНІМАЛЬНОГО ЗА МОДУЛЕМ ---
+    int min_mod = a[0]; // Припускаємо, що перший елемент мінімальний
+    for (int i = 1; i < n; i++) {
+        // Якщо модуль поточного елемента менший за модуль мінімального
+        if (abs(a[i]) < abs(min_mod)) {
+            min_mod = a[i]; // Запам'ятовуємо нове мінімальне число
+        }
+    }
+    printf("\n1) Мінімальний за модулем елемент: %d\n", min_mod);
+
+    // --- 2) ДОБУТОК МІЖ ПЕРШИМ ТА ОСТАННІМ НУЛЯМИ ---
+    int first_zero = -1; // Індекс першого нуля
+    int last_zero = -1;  // Індекс останнього нуля
+
+    // Шукаємо індекси нулів
+    for (int i = 0; i < n; i++) {
+        if (a[i] == 0) {
+            if (first_zero == -1) {
+                first_zero = i; // Знайшли перший нуль
+            }
+            last_zero = i;      // Кожен наступний знайдений нуль стає останнім
+        }
+    }
+
+    // Перевірка, чи знайдено хоча б два нулі
+    if (first_zero != -1 && last_zero != -1 && first_zero != last_zero) {
+        long long product = 1; // Використовуємо long long для великих добутків
+        
+        // Множимо елементи, що розташовані МІЖ ними
+        for (int i = first_zero + 1; i < last_zero; i++) {
+            product *= a[i];
+        }
+        
+        // Якщо між нулями нічого немає (вони стоять поруч), добуток буде 1 (або можна вивести 0)
+        if (last_zero - first_zero == 1) product = 0;
+
+        printf("2) Добуток елементів між нулями (індекси %d та %d): %lld\n", first_zero, last_zero, product);
+    } else {
+        printf("2) Неможливо обчислити добуток: потрібно мінімум два нульових елементи.\n");
+    }
+
     return 0;
 }
